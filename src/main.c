@@ -1,37 +1,69 @@
-#include <unistd.h>
-#include <string.h>
+// main.c
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 #include "Token.h"
-   
+#include "Parser.h"
+#include "Executor.h"
+#include "Database.h"
+
 int main() {
     char input[1024];
+    Database *db = db_load("mydb.sdb");
+    if (!db) {
+        db = db_create("mydb.sdb");
+    }
 
     for (;;) {
-        write(1, "> ", 2);
-        ssize_t char_count = read(0, input, 1024);
-
+        write(1, "sql> ", 5);
+        ssize_t char_count = read(0, input, sizeof(input) - 1);
+        
         if (char_count == -1) {
             perror("read");
-            return 1;
+            break;
         }
-
+        
         if (char_count == 0) {
-            printf("\nExiting Shell\n");
-            return 0;
+            printf("\nExiting SQL Shell\n");
+            break;
         }
         
         input[char_count - 1] = '\0';
-        printf("Input: %s\n", input);
-        printf("Length: %ld\n", strlen(input)); 
 
         Token **tokens = tokenize(input);
-        printf("Detected Tokens are:\n");
-        for (int i = 0; tokens[i] != NULL; i++) {
-            printf("Token: %s\t|| Type: %s\n", tokens[i]->value, token_type_to_string(tokens[i]->type));
+        if (tokens == NULL) {
+            fprintf(stderr, "Error tokenizing input\n");
+            continue;
         }
 
-        free_tokens(tokens);
+        if (tokens[0]->type == TOKEN_SELECT) {
+            SelectStatement *stmt = parse_select(tokens);
+            if (stmt) {
+                execute_select(db, stmt);
+                free_select_statement(stmt);
+            }
+        } else if (tokens[0]->type == TOKEN_CREATE) {
+            CreateTableStatement *stmt = parse_create_table(tokens);
+            if (stmt) {
+                execute_create_table(db, stmt);
+                free_create_table_statement(stmt);
+            }
+        } else if (tokens[0]->type == TOKEN_INSERT) {
+            InsertStatement *stmt = parse_insert(tokens);
+            if (stmt) {
+                execute_insert(db, stmt);
+                free_insert_statement(stmt);
+            }
+        }
+
+        // Free the tokens
+        for (int i = 0; tokens[i] != NULL; i++) {
+            free_token(tokens[i]);
+        }
+        free(tokens);
     }
-        
+
+    db_close(db);
     return 0;
 }
