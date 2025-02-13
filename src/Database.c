@@ -4,8 +4,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define INITIAL_TABLE_CAP 10;
-#define INITIAL_ROW_CAP 100;
+#define INITIAL_TABLE_CAP 10
+#define INITIAL_ROW_CAP 100
 
 Database* db_create(const char* filename) {
     Database* db = (Database *)malloc(sizeof(Database));
@@ -56,8 +56,8 @@ bool db_save(Database* db) {
                         break;        
                     }
                     case TYPE_TEXT: {
-                        char* str = (char*)row->values[k];
-                        size_t str_len = str ? strlen : 0;
+                        char* str = row->values[k] ? (char*)row->values[k] : "";
+                        size_t str_len = strlen(str);
                         fwrite(&str_len, sizeof(size_t), 1, file);
                         if (str_len > 0) {
                             fwrite(str, 1, str_len, file);
@@ -192,10 +192,9 @@ bool create_table(Database* db, const char* table_name, Column* columns, size_t 
         table->schema.columns[i].name = strdup(columns[i].name);
     }
     
-    // Initialize rows
-    table->rows = NULL;
-    table->row_count = 0;
+    // Initialize rows with proper capacity
     table->capacity = INITIAL_ROW_CAP;
+    table->row_count = 0;
     table->rows = malloc(sizeof(Row) * table->capacity);
     
     if (!table->rows) {
@@ -213,7 +212,7 @@ bool create_table(Database* db, const char* table_name, Column* columns, size_t 
 }
 
 bool insert_into_table(Database* db, const char* table_name, const char** values, size_t value_count) {
-    // Find the table
+    // find table
     Table* table = NULL;
     for (size_t i = 0; i < db->table_count; i++) {
         if (strcmp(db->tables[i].schema.name, table_name) == 0) {
@@ -224,10 +223,9 @@ bool insert_into_table(Database* db, const char* table_name, const char** values
     
     if (!table) return false;
     
-    // Validate column count
+    // validate col count
     if (value_count != table->schema.column_count) return false;
     
-    // Check if we need to expand the rows array
     if (table->row_count >= table->capacity) {
         size_t new_capacity = table->capacity * 2;
         Row* new_rows = realloc(table->rows, sizeof(Row) * new_capacity);
@@ -237,18 +235,18 @@ bool insert_into_table(Database* db, const char* table_name, const char** values
         table->capacity = new_capacity;
     }
     
-    // Create new row
+    // create new row
     Row* row = &table->rows[table->row_count];
     row->values = malloc(sizeof(void*) * value_count);
     row->value_count = value_count;
     
-    // Parse and store values
+    // parse and store values
     for (size_t i = 0; i < value_count; i++) {
         ColumnType type = table->schema.columns[i].type;
         row->values[i] = parse_value(values[i], type);
         
         if (!row->values[i] && !table->schema.columns[i].is_nullable) {
-            // Cleanup on failure
+            // if fail -> clean up
             for (size_t j = 0; j < i; j++) {
                 free_value(row->values[j], table->schema.columns[j].type);
             }

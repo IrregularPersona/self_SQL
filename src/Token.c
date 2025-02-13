@@ -86,6 +86,18 @@ Token **tokenize(const char* input) {
                 free(val);
                 p++; // Skip closing quote
             }
+        } else if (strncmp(p, "PRIMARY", 7) == 0) {
+            tokens[token_count++] = create_token(TOKEN_PRIMARY, "PRIMARY");
+            p += 7;
+        } else if (strncmp(p, "KEY", 3) == 0) {
+            tokens[token_count++] = create_token(TOKEN_KEY, "KEY");
+            p += 3;
+        } else if (strncmp(p, "NOT", 3) == 0) {
+            tokens[token_count++] = create_token(TOKEN_NOT, "NOT");
+            p += 3;
+        } else if (strncmp(p, "NULL", 4) == 0) {
+            tokens[token_count++] = create_token(TOKEN_NULL, "NULL");
+            p += 4;
         } else if (isalpha(*p)) { // Identifiers (table/column names)
             const char *start = p;
             while (isalnum(*p) || *p == '_') p++;
@@ -119,12 +131,14 @@ Token **tokenize(const char* input) {
 
 const char* token_type_to_string(TokenType type) {
     switch (type) {
-        case TOKEN_SELECT: return "TOKEN_SELECT";
         case TOKEN_CREATE: return "TOKEN_CREATE";
         case TOKEN_TABLE: return "TOKEN_TABLE";
+        case TOKEN_SELECT: return "TOKEN_SELECT";
         case TOKEN_FROM: return "TOKEN_FROM";
         case TOKEN_WHERE: return "TOKEN_WHERE";
         case TOKEN_INSERT: return "TOKEN_INSERT";
+        case TOKEN_INTO: return "TOKEN_INTO";
+        case TOKEN_VALUES: return "TOKEN_VALUES";
         case TOKEN_UPDATE: return "TOKEN_UPDATE";
         case TOKEN_DELETE: return "TOKEN_DELETE";
         case TOKEN_STAR: return "TOKEN_STAR";
@@ -133,6 +147,12 @@ const char* token_type_to_string(TokenType type) {
         case TOKEN_IDENTIFIER: return "TOKEN_IDENTIFIER";
         case TOKEN_INTEGER: return "TOKEN_INTEGER";
         case TOKEN_TEXT: return "TOKEN_TEXT";
+        case TOKEN_LEFT_PAREN: return "TOKEN_LEFT_PAREN";
+        case TOKEN_RIGHT_PAREN: return "TOKEN_RIGHT_PAREN";
+        case TOKEN_PRIMARY: return "TOKEN_PRIMARY";
+        case TOKEN_KEY: return "TOKEN_KEY";
+        case TOKEN_NOT: return "TOKEN_NOT";
+        case TOKEN_NULL: return "TOKEN_NULL";
         case TOKEN_EOF: return "TOKEN_EOF";
         default: return "UNKNOWN_TOKEN";
     }

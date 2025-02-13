@@ -28,7 +28,7 @@ typedef struct {
 
 SelectStatement *parse_select(Token **tokens);
 CreateTableStatement *parse_create_table(Token **tokens);
-InsertStatement *parse_insert(Token **tokens);
+InsertStatement *parse_insert(Database* db, Token **tokens);
 
 void free_select_statement(SelectStatement *stmt);
 void free_create_table_statement(CreateTableStatement *stmt);

@@ -2,3 +2,6 @@ src/*.o
 Makefile
 Makefile2
 myprogram
+mydb.sdb
+clean.sh
+

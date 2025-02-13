@@ -7,6 +7,7 @@
 #include "Parser.h"
 #include "Executor.h"
 #include "Database.h"
+#include "debug.h"
 
 int main() {
     char input[1024];
@@ -36,6 +37,9 @@ int main() {
             fprintf(stderr, "Error tokenizing input\n");
             continue;
         }
+        for (size_t j = 0; tokens[j] != NULL; j++) {
+            printf("Token[%zu]: %s (%s)\n", j, tokens[j]->value, token_type_to_string(tokens[j]->type));
+        }
 
         if (tokens[0]->type == TOKEN_SELECT) {
             SelectStatement *stmt = parse_select(tokens);
@@ -50,7 +54,7 @@ int main() {
                 free_create_table_statement(stmt);
             }
         } else if (tokens[0]->type == TOKEN_INSERT) {
-            InsertStatement *stmt = parse_insert(tokens);
+            InsertStatement *stmt = parse_insert(db, tokens);
             if (stmt) {
                 execute_insert(db, stmt);
                 free_insert_statement(stmt);
